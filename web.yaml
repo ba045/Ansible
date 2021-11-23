@@ -2,14 +2,32 @@
   hosts: _web
   become: true
   vars:
-          ansible_ssh_private_key_file: fox-key.pem
+          ansible_ssh_private_key_file: fox-key
   tasks:
           - name: httpd
             yum:
                     name: httpd
                     state: present
+          - name: create index.html
+            copy:
+                    src: index.html
+                    dest: /var/www/html/index.html
+          - name: proxy
+            copy:
+                    dest: /etc/httpd/conf.d/proxy.conf
+                    content: |
+                        <IfModule mod_proxy.c>
+                            ProxyRequests Off
+                            ProxyPreserveHost On
+                            <Proxy *>
+                                    Order deny,allow
+                                    Allow from all
+                            </Proxy>
+                            ProxyPass / http://fox-nlb-fb51cfd7e327e06f.elb.ap-northeast-2.amazonaws.com:8080
+                            ProxyPassReverse / http://fox-nlb-fb51cfd7e327e06f.elb.ap-northeast-2.amazonaws.com:8080
+                        </IfModule>
           - name: start
             service:
                     name: httpd
-                    state: started
+                    state: restarted
                     enabled: true
