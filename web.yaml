@@ -1,3 +1,9 @@
+- name: nbl
+  hosts: localhost
+  tasks:
+          - elb_application_lb_info:
+                    region: ap-northeast-2
+            register: nlb
 - name: web
   hosts: _web
   become: true
@@ -23,8 +29,8 @@
                                     Order deny,allow
                                     Allow from all
                             </Proxy>
-                            ProxyPass / http://fox-nlb-fb51cfd7e327e06f.elb.ap-northeast-2.amazonaws.com:8080
-                            ProxyPassReverse / http://fox-nlb-fb51cfd7e327e06f.elb.ap-northeast-2.amazonaws.com:8080
+                            ProxyPass / http://{{ item.dns_name }}:8080/
+                            ProxyPassReverse / http://{{ item.dns_name }}:8080/
                         </IfModule>
           - name: start
             service:

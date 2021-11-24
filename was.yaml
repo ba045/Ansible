@@ -9,10 +9,15 @@
               name: java-1.8.0-openjdk-devel.x86_64
               state: present
             become: yes
+          - name: groupadd
+            group:
+                    name: tomcat
           - name: useradd
             user:
                     name: tomcat
-                    system: true
+                    group: tomcat
+                    become: true
+                    become_method: sudo
                     home: /opt/tomcat
                     shell: /bin/false
           - name: tomcat wget
@@ -124,9 +129,11 @@
                     dest: ./petclinic_btc
                     clone: true
           - name: pom.xml
-            shell: sed -i 's/[Change Me]:3306/fox-db.cxniodmedree.ap-northeast-2.rds.amazonaws.com/' /home/ec2-user/petclinic_btc/pom.xml
-            // 수정이 안됨!
+            replace:
+                    dest: /home/ec2-user/petclinic_btc/pom.xml
+                    regexp: '[Change Me]:3306'
+                    replace: 'fox-db.cxniodmedree.ap-northeast-2.rds.amazonaws.com'
           - name: deploy
             shell:
-                    cmd: ./mvnw tomcat7:deploy -P MYSQL
+                    cmd: ./mvnw tomcat7:deploy -P MySQL
                     chdir: /home/ec2-user/petclinic_btc
