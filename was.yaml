@@ -1,3 +1,9 @@
+- name: rds
+  hosts: localhost
+  tasks:
+          - rds_instance_info:
+                    region: ap-northeast-2
+            register: rds
 - name: was
   hosts: _was
   become: true
@@ -6,8 +12,8 @@
   tasks:
           - name: Install the JDK
             yum:
-              name: java-1.8.0-openjdk-devel.x86_64
-              state: present
+                    name: java-1.8.0-openjdk-devel.x86_64
+                    state: present
           - name: groupadd
             group:
                     name: tomcat
@@ -126,12 +132,27 @@
                     repo: https://github.com/SteveKimbespin/petclinic_btc.git
                     dest: ./petclinic_btc
                     clone: true
-          - name: pom.xml
+          - name: rds replace
             replace:
                     dest: /home/ec2-user/petclinic_btc/pom.xml
-                    regexp: '[Change Me]:3306'
-                    replace: 'fox-db.cxniodmedree.ap-northeast-2.rds.amazonaws.com'
+                    replace: "{{ item.line }}"
+                    regexp: "{{ item.regexp }}"
+            loop:
+                    - { regexp: '\[Change Me\]:3306\/petclinic', line: '{{ hostvars["localhost"]["rds"].instances[0].endpoint.address }}/tomcat' }
+          - stat:
+                    path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/h2-1.4.200.jar
+            register: h2
+          - stat:
+                    path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/mysql-connector-java-8.0.19.jar
+            register: connector
           - name: deploy
             shell:
-                    cmd: ./mvnw tomcat7:deploy -P MySQL
-                    chdir: /home/ec2-user/petclinic_btc
+                    cmd: ./mvnw tomcat7:deploy
+                    chdir: /home/ubuntu/petclinic_btc
+            when: (not h2.stat.exists and not connector.stat.exists)
+            ignore_errors: true
+          - name: mysql deploy
+            shell:
+                    cmd: ./mvnw tomcat7:redeploy -P MySQL
+                    chdir: /home/ubuntu/petclinic_btc
+            when: not connector.stat.exists
