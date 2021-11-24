@@ -26,12 +26,13 @@
                             ProxyRequests Off
                             ProxyPreserveHost On
                             <Proxy *>
-                                    Order deny,allow
-                                    Allow from all
+                                    Require all granted
                             </Proxy>
                             ProxyPass / http://{{ item.dns_name }}:8080/
                             ProxyPassReverse / http://{{ item.dns_name }}:8080/
                         </IfModule>
+            with_items: '{{ hostvars["localhost"]["nlb"].load_balancers }}'
+            when: item.type  == "network"
           - name: start
             service:
                     name: httpd

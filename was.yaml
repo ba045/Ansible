@@ -8,7 +8,6 @@
             yum:
               name: java-1.8.0-openjdk-devel.x86_64
               state: present
-            become: yes
           - name: groupadd
             group:
                     name: tomcat
@@ -16,8 +15,7 @@
             user:
                     name: tomcat
                     group: tomcat
-                    become: true
-                    become_method: sudo
+                    system: yes
                     home: /opt/tomcat
                     shell: /bin/false
           - name: tomcat wget
@@ -66,7 +64,7 @@
                             User=tomcat
                             Group=tomcat
 
-                            Environment="JAVA_HOME=/usr/lib/jvm/default-java"
+                            Environment="JAVA_HOME=/usr/lib/jvm/java"
                             Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true"
 
                             Environment="CATALINA_BASE=/opt/tomcat/latest"
