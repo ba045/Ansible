@@ -9,7 +9,7 @@
   hosts: _was
   become: true
   vars:
-          ansible_ssh_private_key_file: key
+          ansible_ssh_private_key_file: fox-key
   tasks:
           - name: jdk
             apt:
@@ -131,8 +131,7 @@
                     replace: "{{ item.line }}"
                     regexp: "{{ item.regexp }}"
             loop:
-                    - { regexp: '\[Change Me\]:3306\/petclinic', line: '{{ hostvars["localhost"]["rds"].instances[0].endpoint.address }}/tomcat' }
-                    - { regexp: '<jdbc.password>petclinic<\/jdbc.password>', line: '<jdbc.password>It12345!</jdbc.password>' }
+                    - { regexp: '\[Change Me\]:3306', line: '{{ hostvars["localhost"]["rds"].instances[0].endpoint.address }}' }
           - stat:
                   path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/h2-1.4.200.jar
             register: h2

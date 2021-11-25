@@ -9,7 +9,7 @@
   hosts: _web
   become: true
   vars:
-          ansible_ssh_private_key_file: key
+          ansible_ssh_private_key_file: fox-key
   tasks:
           - name: apache2
             apt:
