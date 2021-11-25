@@ -1,27 +1,24 @@
+---
 - name: rds
   hosts: localhost
   tasks:
           - rds_instance_info:
-                    region: ap-northeast-2
+                  region: ap-northeast-2
             register: rds
 - name: was
   hosts: _was
   become: true
   vars:
-          ansible_ssh_private_key_file: fox-key
+          ansible_ssh_private_key_file: key
   tasks:
-          - name: Install the JDK
-            yum:
-                    name: java-1.8.0-openjdk-devel.x86_64
-                    state: present
-          - name: groupadd
-            group:
-                    name: tomcat
+          - name: jdk
+            apt:
+                    name: default-jdk
+                    state: latest
           - name: useradd
             user:
                     name: tomcat
-                    group: tomcat
-                    system: yes
+                    system: true
                     home: /opt/tomcat
                     shell: /bin/false
           - name: tomcat wget
@@ -44,7 +41,6 @@
                     recurse: true
                     owner: tomcat
                     group: tomcat
-
           - name: find
             find:
                     paths: /opt/tomcat/latest/bin/
@@ -70,7 +66,7 @@
                             User=tomcat
                             Group=tomcat
 
-                            Environment="JAVA_HOME=/usr/lib/jvm/java"
+                            Environment="JAVA_HOME=/usr/lib/jvm/default-java"
                             Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true"
 
                             Environment="CATALINA_BASE=/opt/tomcat/latest"
@@ -90,7 +86,7 @@
                     dest: .
           - name: tar conn
             unarchive:
-                    src: /home/ec2-user/mysql-connector-java-8.0.26.tar.gz
+                    src: /home/ubuntu/mysql-connector-java-8.0.26.tar.gz
                     dest: /opt/tomcat/latest/lib
                     remote_src: true
           - name: tomcat user
@@ -122,29 +118,26 @@
                     daemon_reload: true
                     state: started
                     enabled: true
-          - name: git install
-            yum:
-                    name: git
-                    state: present
-            become: yes
           - name: git
             git:
                     repo: https://github.com/SteveKimbespin/petclinic_btc.git
                     dest: ./petclinic_btc
                     clone: true
                     force: true
+          - debug: var=hostvars['localhost']['rds']
           - name: rds replace
             replace:
-                    dest: /home/ec2-user/petclinic_btc/pom.xml
+                    dest: /home/ubuntu/petclinic_btc/pom.xml
                     replace: "{{ item.line }}"
                     regexp: "{{ item.regexp }}"
             loop:
                     - { regexp: '\[Change Me\]:3306\/petclinic', line: '{{ hostvars["localhost"]["rds"].instances[0].endpoint.address }}/tomcat' }
+                    - { regexp: '<jdbc.password>petclinic<\/jdbc.password>', line: '<jdbc.password>It12345!</jdbc.password>' }
           - stat:
-                    path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/h2-1.4.200.jar
+                  path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/h2-1.4.200.jar
             register: h2
           - stat:
-                    path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/mysql-connector-java-8.0.19.jar
+                  path: /opt/tomcat/apache-tomcat-9.0.54/webapps/petclinic/WEB-INF/lib/mysql-connector-java-8.0.19.jar
             register: connector
           - name: deploy
             shell:

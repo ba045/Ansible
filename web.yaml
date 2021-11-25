@@ -1,39 +1,45 @@
-- name: nbl
+---
+- name: elb
   hosts: localhost
   tasks:
-          - elb_application_lb_info:
-                    region: ap-northeast-2
-            register: nlb
+                    - elb_application_lb_info:
+                            region: ap-northeast-2
+                      register: elb
 - name: web
   hosts: _web
   become: true
   vars:
-          ansible_ssh_private_key_file: fox-key
+          ansible_ssh_private_key_file: key
   tasks:
-          - name: httpd
-            yum:
-                    name: httpd
-                    state: present
-          - name: create index.html
-            copy:
-                    src: index.html
-                    dest: /var/www/html/index.html
+          - name: apache2
+            apt:
+                    name: apache2
+                    state: latest
+          - name: start
+            service:
+                    name: apache2
+                    state: started
+                    enabled: true
+            ignore_errors: true
           - name: proxy
-            copy:
-                    dest: /etc/httpd/conf.d/proxy.conf
+            blockinfile:
+                    dest: /etc/apache2/sites-available/000-default.conf
                     content: |
-                        <IfModule mod_proxy.c>
                             ProxyRequests Off
+                            ProxyPreserveHost On
                             <Proxy *>
-                                    Require all granted
+                                    Order deny,allow
+                                    Allow from all
                             </Proxy>
                             ProxyPass / http://{{ item.dns_name }}:8080/
                             ProxyPassReverse / http://{{ item.dns_name }}:8080/
-                        </IfModule>
-            with_items: '{{ hostvars["localhost"]["nlb"].load_balancers }}'
+                    insertbefore: "^</VirtualHost>$"
+            with_items: '{{ hostvars["localhost"]["elb"].load_balancers }}'
             when: item.type  == "network"
-          - name: start
-            service:
-                    name: httpd
+          - name: proxy2
+            command: a2enmod proxy_http
+          - name: proxy3
+            systemd:
+                    name: apache2
                     state: restarted
                     enabled: true
