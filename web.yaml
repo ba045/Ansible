@@ -24,7 +24,6 @@
                     content: |
                         <IfModule mod_proxy.c>
                             ProxyRequests Off
-                            ProxyPreserveHost On
                             <Proxy *>
                                     Require all granted
                             </Proxy>

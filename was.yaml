@@ -132,6 +132,7 @@
                     repo: https://github.com/SteveKimbespin/petclinic_btc.git
                     dest: ./petclinic_btc
                     clone: true
+                    force: true
           - name: rds replace
             replace:
                     dest: /home/ec2-user/petclinic_btc/pom.xml
