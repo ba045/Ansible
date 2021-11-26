@@ -1,0 +1,25 @@
+---
+- name: bastion
+  hosts: localhost
+  become: true
+  tasks:
+          - name: make directory ebs
+            file:
+                    path: /home/ubuntu/ebs
+                    state: directory
+          - name: make file system ebs
+            filesystem:
+                    fstype: xfs
+                    dev: /dev/xvdh
+          - name: mount ebs
+            mount:
+                    path: /home/ubuntu/ebs
+                    src: /dev/xvdh
+                    state: mounted
+                    fstype: xfs
+          - name: change owner ebs
+            file:
+                    dest: /home/ubuntu/ebs
+                    owner: ubuntu
+                    group: ubuntu
+                    state: directory
