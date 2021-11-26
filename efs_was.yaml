@@ -1,0 +1,35 @@
+---
+- name: efs
+  hosts: localhost
+  tasks:
+          - efs_info:
+                    region: ap-northeast-2
+            register: efs
+  register: efs
+- name: was
+  hosts: _was
+  become: true
+  vars:
+          ansible_ssh_private_key_file: fox-key
+  tasks:      
+          - name: install nfs-common
+            apt:
+                    name: nfs-common
+                    state: latest
+          - name: mkdir efs
+            file:
+                    path: /home/ubuntu/efs
+                    state: directory
+          - name: mount efs
+            mount:
+                    path: /home/ubuntu/efs
+                    src: '{{ hostvars["localhost"]["efs"].efs[0].mount_point[1:] }}'
+                    fstype: nfs4
+                    opts: nfsvers=4.1
+                    state: mounted
+          - name: change owner efs
+            file:
+                    dest: /home/ubuntu/efs
+                    owner: ubuntu
+                    group: ubuntu
+                    state: directory
