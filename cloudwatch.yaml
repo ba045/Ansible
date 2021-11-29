@@ -1,14 +1,12 @@
 ---
-- name: variable
-  hosts: all
-  vars_files:
-          - variable.yaml
 - name: cloudwatch for web
   hosts: _web
   gather_facts: true
   become: true
+  vars_files:
+          - variable.yaml
   vars:
-            ansible_ssh_private_key_file: {{ key_name }}
+            ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
         - name: deb CloudWatchAgent
           apt:
@@ -84,8 +82,10 @@
   hosts: _was
   gather_facts: true
   become: true
+  vars_files:
+          - variable.yaml
   vars:
-            ansible_ssh_private_key_file: {{ key_name }}
+            ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
         - name: deb CloudWatchAgent
           apt:

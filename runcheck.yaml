@@ -1,13 +1,11 @@
 ---
-- name: variable
-  hosts: all
-  vars_files:
-          - variable.yaml
 - name: runcheck
   hosts: _was:_web
   become: true
+  vars_files:
+          - variable.yaml
   vars:
-          ansible_ssh_private_key_file: {{ key_name }}
+          ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
           - name: aws cli download
             apt:
@@ -21,8 +19,10 @@
 - name: runcheck apache
   hosts: _web
   become: true
+  vars_files:
+          - variable.yaml
   vars:
-          ansible_ssh_private_key_file: key
+          ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
           - name: make file
             copy:
@@ -45,8 +45,10 @@
 - name: runcheck tomcat
   hosts: _was
   become: true
+  vars_files:
+          - variable.yaml
   vars:
-          ansible_ssh_private_key_file: key
+          ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
           - name: make file
             copy:

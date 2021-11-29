@@ -1,21 +1,21 @@
 ---
-- name: variable
-  hosts: all
-  vars_files:
-          - variable.yaml
 - name: redis info
   hosts: localhost
+  vars_files:
+          - variable.yaml
   tasks:
           - elasticache_info:
-                  region: {{ project_region }}
-                  cache_cluster_id: {{ project_name }}-redis
+                  region: '{{ project_region }}'
+                  cache_cluster_id: '{{ project_name }}-redis'
             register: redis
 - name: redis connect
   hosts: _was
   become: true
   gather_facts: false
+  vars_files:
+          - variable.yaml
   vars:
-          ansible_ssh_private_key_file: fox-key
+          ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
           - name: wget
             get_url:
