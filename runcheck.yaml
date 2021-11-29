@@ -1,0 +1,68 @@
+---
+- name: variable
+  hosts: all
+  vars_files:
+          - variable.yaml
+- name: runcheck
+  hosts: _was:_web
+  become: true
+  vars:
+          ansible_ssh_private_key_file: {{ key_name }}
+  tasks:
+          - name: aws cli download
+            apt:
+                    name: awscli
+                    state: latest
+                    update_cache: true
+          - name: cron
+            cron:
+                    name: runcheck
+                    job: /home/ubuntu/runcheck.sh
+- name: runcheck apache
+  hosts: _web
+  become: true
+  vars:
+          ansible_ssh_private_key_file: key
+  tasks:
+          - name: make file
+            copy:
+                    dest: /home/ubuntu/runcheck.sh
+                    content: |
+                            result=`ps aux | grep "apache2" | grep -v "grep" | wc -l`
+                            if [ $result -ge 1 ]
+                            then
+                            echo "apache2 service is running"
+                            else
+                            echo "apache2 service is not running"
+
+                            systemctl start apache2
+                            echo `date` restarted apache2 >> /home/ubuntu/apache2_restart.log
+
+                            aws s3 cp /home/ubuntu/apache2_restart.log s3://elb-ec2-log-test
+                            echo "nifi started"
+                            fi
+                    mode: 0755
+- name: runcheck tomcat
+  hosts: _was
+  become: true
+  vars:
+          ansible_ssh_private_key_file: key
+  tasks:
+          - name: make file
+            copy:
+                    dest: /home/ubuntu/runcheck.sh
+                    content: |
+                            result=`ps aux | grep -e "org.apache.catalina.startup.Bootstrap start" | grep -v "grep" | wc -l`
+                            if [ $result -ge 1 ]
+                            then
+                            echo "tomcat service is running"
+                            else
+                            echo "tomcat service is not running"
+
+                            systemctl start tomcat
+                            echo `date` restarted tomcat >> /home/ubuntu/tomcat_restart.log
+
+                            aws s3 cp /home/ubuntu/tomcat_restart.log s3://elb-ec2-log-test
+                            echo "nifi started"
+                            fi
+                    mode: 0755

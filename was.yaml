@@ -1,15 +1,20 @@
 ---
+- name: variable
+  hosts: all
+  vars_files:
+          - variable.yaml
 - name: rds
   hosts: localhost
   tasks:
           - rds_instance_info:
-                  region: ap-northeast-2
+                  region: {{ project_region }}
+                  db_instance_identifier: {{ project_name }}-db
             register: rds
 - name: was
   hosts: _was
   become: true
   vars:
-          ansible_ssh_private_key_file: fox-key
+          ansible_ssh_private_key_file: {{ key_name }}
   tasks:
           - name: jdk
             apt:
@@ -124,7 +129,6 @@
                     dest: ./petclinic_btc
                     clone: true
                     force: true
-          - debug: var=hostvars['localhost']['rds']
           - name: rds replace
             replace:
                     dest: /home/ubuntu/petclinic_btc/pom.xml

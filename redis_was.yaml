@@ -1,0 +1,167 @@
+---
+- name: variable
+  hosts: all
+  vars_files:
+          - variable.yaml
+- name: redis info
+  hosts: localhost
+  tasks:
+          - elasticache_info:
+                  region: {{ project_region }}
+                  cache_cluster_id: {{ project_name }}-redis
+            register: redis
+- name: redis connect
+  hosts: _was
+  become: true
+  gather_facts: false
+  vars:
+          ansible_ssh_private_key_file: fox-key
+  tasks:
+          - name: wget
+            get_url:
+                    url: https://github.com/ran-jit/tomcat-cluster-redis-session-manager/releases/download/2.0.4/tomcat-cluster-redis-session-manager.zip
+                    dest: .
+          - name: unzip
+            apt:
+                    name: unzip
+          - name: unzip
+            unarchive:
+                    src: ./tomcat-cluster-redis-session-manager.zip
+                    dest: .
+                    remote_src: true
+          - name: find lib
+            find:
+                    paths: tomcat-cluster-redis-session-manager/lib/
+                    patterns: "*"
+            register: lib
+          - name: cp lib
+            copy:
+                    src: "{{ item.path }}"
+                    dest: /opt/tomcat/latest/lib
+                    remote_src: true
+            loop: "{{ lib.files }}"
+          - name: cp conf
+            copy:
+                    src: ~ubuntu/tomcat-cluster-redis-session-manager/conf/redis-data-cache.properties
+                    dest: /opt/tomcat/latest/conf
+                    remote_src: true
+          - name: change conf properties
+            lineinfile:
+                    dest: /opt/tomcat/latest/conf/redis-data-cache.properties
+                    regexp: redis.hosts
+                    line: redis.hosts={{ hostvars.localhost.redis.elasticache_clusters[0].cache_nodes[0].endpoint.address }}:6379
+          - name: change conf web.xml
+            replace:
+                    dest: /opt/tomcat/latest/conf/web.xml
+                    regexp: <session-timeout>.*</session-timeout>
+                    replace: <session-timeout>200</session-timeout>
+          - name: change conf context.xml
+            blockinfile:
+                    dest: /opt/tomcat/latest/conf/context.xml
+                    insertbefore: </Context>
+                    content: |
+                             <Valve className="tomcat.request.session.redis.SessionHandlerValve" />
+                             <Manager className="tomcat.request.session.redis.SessionManager" />
+          - name: test.jsp
+            copy:
+                    dest: /opt/tomcat/latest/webapps/ROOT/test.jsp
+                    content: |
+                           <%@ page language="java" contentType="text/html; charset=EUC-KR"
+                                   pageEncoding="EUC-KR"%>
+                           <%@ page import="java.text.*"%>
+                           <%@ page import="java.util.*"%>
+                           <%
+                             int count = 0;
+
+                             if(session.getAttribute("count") != null)
+                               count = (Integer) session.getAttribute("count");
+
+                             count += 1;
+
+                             session.setAttribute("count", count);
+
+                             out.println(session.getId() + "     :     " + count);
+                           %>
+                           <%
+                                   String RsessionId = request.getRequestedSessionId();
+                                   String sessionId = session.getId();
+                                   boolean isNew = session.isNew();
+                                   long creationTime = session.getCreationTime();
+                                   long lastAccessedTime = session.getLastAccessedTime();
+                                   int maxInactiveInterval = session.getMaxInactiveInterval();
+                                   Enumeration e = session.getAttributeNames();
+                           %>
+                           <html>
+                           <head>
+                           <meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+                           <title>Session Test</title>
+                           </head>
+                           <body>
+                           
+                           <table border=1 bordercolor="gray" cellspacing=1 cellpadding=0
+                                   width="100%">
+                                   <tr bgcolor="gray">
+                                           <td colspan=2 align="center"><font color="white"><b>Session
+                                           Info</b></font></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Server HostName</td>
+                                           <td><%=java.net.InetAddress.getLocalHost().getHostName()%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Server IP</td>
+                                           <td><%=java.net.InetAddress.getLocalHost()
+                                                                                                   .getHostAddress()%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Request SessionID</td>
+                                           <td><%=RsessionId%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>SessionID</td>
+                                           <td><%=sessionId%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>isNew</td>
+                                           <td><%=isNew%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Creation Time</td>
+                                           <td><%=new Date(creationTime)%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Last Accessed Time</td>
+                                           <td><%=new Date(lastAccessedTime)%></td>
+                                   </tr>
+                                   <tr>
+                                           <td>Max Inactive Interval (second)</td>
+                                           <td><%=maxInactiveInterval%></td>
+                                   </tr>
+                                <tr bgcolor="cyan">
+                                           <td colspan=2 align="center"><b>Session Value List</b></td>
+                                   </tr>
+                                   <tr>
+                                           <td align="center">NAME</td>
+                                           <td align="center">VAULE</td>
+                                   </tr>
+                                   <%
+                                           String name = null;
+                                           while (e.hasMoreElements()) {
+                                                   name = (String) e.nextElement();
+                                   %>
+                                   <tr>
+                                           <td align="left"><%=name%></td>
+                                           <td align="left"><%=session.getAttribute(name)%></td>
+                                   </tr>
+                                   <%
+                                           }
+                                   %>
+
+                           </table>
+
+                           </body>
+                           </html>
+          - name: restart
+            systemd:
+                    name: tomcat
+                    state: restarted

@@ -1,16 +1,20 @@
 ---
+- name: variable
+  hosts: all
+  vars_files:
+          - variable.yaml
 - name: efs
   hosts: localhost
   tasks:
           - efs_info:
-                    region: ap-northeast-2
+                    region: {{ project_region }}
+                    name: {{ project_name }}-efs123
             register: efs
-  register: efs
 - name: was
   hosts: _was
   become: true
   vars:
-          ansible_ssh_private_key_file: fox-key
+          ansible_ssh_private_key_file: {{ key_name }}
   tasks:      
           - name: install nfs-common
             apt:
