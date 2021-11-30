@@ -1,6 +1,6 @@
 ---
 - name: bastion
-  hosts: localhost
+  hosts: _bastion
   become: true
   tasks:
           - name: make directory ebs
