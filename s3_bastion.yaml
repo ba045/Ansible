@@ -1,0 +1,47 @@
+---
+- name: redis info
+  hosts: localhost
+  vars_files:
+          - variable.yaml
+  tasks:
+          - s3_bucket_info:
+                  region: '{{ project_region }}'
+                  name: '{{ project_name }}-log-bucket123'
+            register: bucket
+- name: s3_bucket_connect
+  hosts: localhost
+  become: true
+  tasks:      
+          - name: install apt
+            apt:
+                    name: 
+                        - automake
+                        - autotools-dev
+                        - fuse
+                        - g++
+                        - libcurl4-gnutls-dev
+                        - libfuse-dev
+                        - libssl-dev
+                        - libxml2-dev
+                        - make
+                        - pkg-config
+                    state: latest
+          - name: git
+            git:
+                    repo: https://github.com/s3fs-fuse/s3fs-fuse.git
+                    dest: ./
+                    clone: true
+                    force: true
+                    
+          - name: mkdir s3bucket
+            file:
+                    path: /home/ubuntu/s3bucket
+                    state: directory
+                    
+       
+          - name: change owner s3bucket
+            file:
+                    dest: /home/ubuntu/s3bucket
+                    owner: ubuntu
+                    group: ubuntu
+                    state: directory

@@ -11,8 +11,11 @@
         - name: deb CloudWatchAgent
           apt:
                 deb: https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        - name: agent stop
+          command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a stop
+
         - name: enter cloudwatch config.json
-          blockinfile:
+          copy:
                 dest: /opt/aws/amazon-cloudwatch-agent/bin/config.json
                 content: |
                         {
@@ -26,18 +29,18 @@
                                                     "collect_list": [
                                                             {
                                                                     "file_path": "/var/log/syslog",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WEB] {instance_id} /var/log/sys.log"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WEB/{instance_id}/var/log/sys.log"
                                                             },
                                                             {
                                                                     "file_path": "/var/log/apache2/access.log",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WEB] {instance_id} /var/log/apache2/access.log"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WEB/{instance_id}/var/log/apache2/access.log"
                                                             },
                                                             {
                                                                     "file_path": "/var/log/apache2/error.log",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WEB] {instance_id} /var/log/apache2/error.log"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WEB/{instance_id}/var/log/apache2/error.log"
                                                             }
                                                     ]
                                             }
@@ -73,8 +76,6 @@
                                     }
                             }
                         }
-                create: true
-                marker: ""
         - name: run
           command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 
@@ -90,8 +91,11 @@
         - name: deb CloudWatchAgent
           apt:
                 deb: https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        - name: agent stop
+          command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a stop
+
         - name: enter cloudwatch config.json
-          blockinfile:
+          copy:
                 dest: /opt/aws/amazon-cloudwatch-agent/bin/config.json
                 content: |
                         {
@@ -105,18 +109,18 @@
                                                     "collect_list": [
                                                             {
                                                                     "file_path": "/var/log/syslog",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WAS] {instance_id} /var/log/sys.log"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WAS/{instance_id}/var/log/sys.log"
                                                             },
                                                             {
                                                                     "file_path": "/opt/tomcat/latest/logs/localhost_access_log.*",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WAS] {instance_id} /tomcat/latest/logs/localhost_access_log"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WAS/{instance_id}/tomcat/latest/logs/localhost_access_log"
                                                             },
                                                             {
                                                                     "file_path": "/opt/tomcat/latest/logs/catalina.out",
-                                                                    "log_group_name": "test",
-                                                                    "log_stream_name": "[WAS] {instance_id} /tomcat/latest/logs/catalina.out"
+                                                                    "log_group_name": '{{ project_name }}-log-group',
+                                                                    "log_stream_name": "WAS/{instance_id}/tomcat/latest/logs/catalina.out"
                                                             }
                                                     ]
                                             }
@@ -152,7 +156,5 @@
                                     }
                             }
                         }
-                create: true
-                marker: ""
         - name: run
           command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json

@@ -6,7 +6,7 @@
   tasks:
           - elasticache_info:
                   region: '{{ project_region }}'
-                  cache_cluster_id: '{{ project_name }}-redis'
+                  name: '{{ project_name }}-redis'
             register: redis
 - name: redis connect
   hosts: _was
