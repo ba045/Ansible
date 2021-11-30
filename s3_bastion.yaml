@@ -1,15 +1,8 @@
 ---
-- name: redis info
+- name: s3_bucket_connect
   hosts: localhost
   vars_files:
           - variable.yaml
-  tasks:
-          - s3_bucket_info:
-                  region: '{{ project_region }}'
-                  name: '{{ project_name }}-log-bucket123'
-            register: bucket
-- name: s3_bucket_connect
-  hosts: localhost
   become: true
   tasks:      
           - name: install apt
@@ -29,19 +22,29 @@
           - name: git
             git:
                     repo: https://github.com/s3fs-fuse/s3fs-fuse.git
-                    dest: ./
+                    dest: /home/ubuntu/s3fs-fuse
                     clone: true
                     force: true
-                    
+          - name: keygen
+            shell:
+                    cmd: ./autogen.sh
+                    chdir: /home/ubuntu/s3fs-fuse
+          - name: openssl
+            shell:
+                    cmd: ./configure --prefix=/usr --with-openssl
+                    chdir: /home/ubuntu/s3fs-fuse
+          - name: Build
+            make:
+                    chdir: /home/ubuntu/s3fs-fuse
+          - name: Run install
+            make:
+                    chdir: /home/ubuntu/s3fs-fuse
+                    target: install    
           - name: mkdir s3bucket
             file:
                     path: /home/ubuntu/s3bucket
-                    state: directory
-                    
-       
-          - name: change owner s3bucket
-            file:
-                    dest: /home/ubuntu/s3bucket
-                    owner: ubuntu
-                    group: ubuntu
-                    state: directory
+                    state: directory      
+          - name: mount
+            shell:
+                    cmd: s3fs {{ project_name }}-log-bucket123 -o iam_role="{{ project_name }}-role-bastion" -o endpoint={{ project_region }} -o allow_other -o use_cache=/tmp -o uid=1000 -o mp_umask=002 /home/ubuntu/s3bucket
+                    chdir: /home/ubuntu/s3fs-fuse
