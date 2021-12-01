@@ -46,5 +46,5 @@
                     state: directory      
           - name: mount
             shell:
-                    cmd: s3fs {{ project_name }}-log-bucket123 -o iam_role="{{ project_name }}-role-bastion" -o endpoint={{ project_region }} -o allow_other -o use_cache=/tmp -o uid=1000 -o mp_umask=002 /home/ubuntu/s3bucket
+                    cmd: s3fs {{ project_name }}-log-bucket123 -o iam_role="{{ project_name }}-role-ansible" -o endpoint={{ project_region }} -o allow_other -o use_cache=/tmp -o uid=1000 -o mp_umask=002 /home/ubuntu/s3bucket
                     chdir: /home/ubuntu/s3fs-fuse

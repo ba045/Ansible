@@ -2,6 +2,10 @@
 - name: bastion
   hosts: _bastion
   become: true
+  vars_files:
+          - variable.yaml
+  vars:
+          ansible_ssh_private_key_file: '{{ key_name }}'
   tasks:
           - name: make directory ebs
             file:

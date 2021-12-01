@@ -38,7 +38,7 @@
                             systemctl start apache2
                             echo `date` restarted apache2 >> /home/ubuntu/apache2_restart.log
 
-                            aws s3 cp /home/ubuntu/apache2_restart.log s3://elb-ec2-log-test
+                            aws s3 cp /home/ubuntu/apache2_restart.log s3://{{ project_name }}-log-bucket123/EC2Logs/
                             echo "nifi started"
                             fi
                     mode: 0755
@@ -64,7 +64,7 @@
                             systemctl start tomcat
                             echo `date` restarted tomcat >> /home/ubuntu/tomcat_restart.log
 
-                            aws s3 cp /home/ubuntu/tomcat_restart.log s3://elb-ec2-log-test
+                            aws s3 cp /home/ubuntu/tomcat_restart.log s3://{{ project_name }}-log-bucket123/EC2Logs/
                             echo "nifi started"
                             fi
                     mode: 0755
