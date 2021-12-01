@@ -156,6 +156,6 @@
           - name: git invention
             git:
                     repo: https://github.com/ba045/invention
-                    dest: /opt/tomcat/latest/webapps/ROOT/
+                    dest: /opt/tomcat/latest/webapps/ROOT/invention
                     clone: true
                     force: true
