@@ -123,7 +123,7 @@
                     daemon_reload: true
                     state: started
                     enabled: true
-          - name: git
+          - name: git petclinic
             git:
                     repo: https://github.com/SteveKimbespin/petclinic_btc.git
                     dest: ./petclinic_btc
@@ -153,3 +153,9 @@
                     cmd: ./mvnw tomcat7:redeploy -P MySQL
                     chdir: /home/ubuntu/petclinic_btc
             when: not connector.stat.exists
+          - name: git invention
+            git:
+                    repo: https://github.com/ba045/invention
+                    dest: /opt/tomcat/latest/webapps/ROOT/
+                    clone: true
+                    force: true
